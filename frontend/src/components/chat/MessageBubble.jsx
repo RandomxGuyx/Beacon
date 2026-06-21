@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 
 export default function MessageBubble({ message }) {
-  const isUser = message.role === "user";
+  const isUser = message.role === "self";
 
   return (
     <motion.article

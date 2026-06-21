@@ -14,16 +14,31 @@ export function useChatSocket(onMessage) {
       socketRef.current = socket;
       setStatus("connecting");
 
-      socket.onopen = () => setStatus("online");
-      socket.onclose = () => setStatus("offline");
-      socket.onerror = () => setStatus("offline");
-      socket.onmessage = (event) => onMessage?.(event.data);
+     socket.onopen = () => {
+  console.log("CONNECTED");
+  setStatus("online");
+};
+
+socket.onclose = (event) => {
+  console.log("CLOSED", event.code, event.reason);
+  setStatus("offline");
+};
+
+socket.onerror = (error) => {
+  console.log("ERROR", error);
+  setStatus("offline");
+};
+
+socket.onmessage = (event) => {
+  console.log("MESSAGE", event.data);
+  onMessage?.(event.data);
+};
     } catch {
       setStatus("offline");
     }
 
     return () => socket?.close();
-  }, [onMessage]);
+  }, []);
 
   const send = useCallback((payload) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {

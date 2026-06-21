@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { FiMenu } from "react-icons/fi";
 import { initialMessages } from "../../data/mockMessages.js";
@@ -7,47 +7,60 @@ import IconButton from "../ui/IconButton.jsx";
 import Sidebar from "./Sidebar.jsx";
 import ChatPanel from "./ChatPanel.jsx";
 
+
 export default function AppShell() {
+  const [username] = useState(
+  () => localStorage.getItem("username") || prompt("Enter your username")
+);
+useEffect(() => {
+  if (username) {
+    localStorage.setItem("username", username);
+  }
+}, [username]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeChannel, setActiveChannel] = useState("general");
   const [messages, setMessages] = useState(initialMessages);
 
-  const addIncomingMessage = useCallback((text) => {
-    setMessages((current) => [
-      ...current,
-      {
-        id: crypto.randomUUID(),
-        author: "Beacon Room",
-        role: "assistant",
-        text,
-        time: new Intl.DateTimeFormat([], { hour: "2-digit", minute: "2-digit" }).format(new Date())
-      }
-    ]);
-  }, []);
+const addIncomingMessage = useCallback((payload) => {
+
+  const data = JSON.parse(payload);
+
+  setMessages((current) => [
+    ...current,
+    {
+      id: crypto.randomUUID(),
+      author: data.username,
+      role: data.username === username ? "self" : "other",
+      text: data.message,
+      time: new Intl.DateTimeFormat([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date()),
+    }
+  ]);
+
+}, [username]);
 
   const { send, status } = useChatSocket(addIncomingMessage);
+const handleSend = useCallback(
+  (text) => {
 
-  const handleSend = useCallback(
-    (text) => {
-      const message = {
-        id: crypto.randomUUID(),
-        author: "You",
-        role: "user",
-        text,
-        time: new Intl.DateTimeFormat([], { hour: "2-digit", minute: "2-digit" }).format(new Date())
-      };
-
-      setMessages((current) => [...current, message]);
-      send(text);
-    },
-    [send]
-  );
-
-  const channelName = useMemo(
-    () => activeChannel.replace("-", " ").replace(/\b\w/g, (char) => char.toUpperCase()),
-    [activeChannel]
-  );
-
+    send(
+      JSON.stringify({
+        username,
+        message: text,
+      })
+    );
+},
+  [send, username]
+);
+const channelName = useMemo(
+  () =>
+    activeChannel
+      .replace("-", " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase()),
+  [activeChannel]
+);
   return (
     <main className="relative min-h-screen overflow-hidden bg-[var(--page-bg)] text-[var(--text-primary)] transition-colors duration-500">
       <div className="ambient-bg" aria-hidden="true" />
