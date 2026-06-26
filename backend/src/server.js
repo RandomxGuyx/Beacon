@@ -132,10 +132,11 @@ app.post('/api/connections/:userId', authenticate, asyncRoute(async (req, res) =
 
 app.patch('/api/connections/:id', authenticate, asyncRoute(async (req, res) => {
   const status = z.enum(['accepted', 'rejected']).parse(req.body.status);
-  const c = await db.prepare("SELECT * FROM connections WHERE id=? AND receiverId=? AND status='pending'").get(req.params.id, req.user.sub);
+  const c = await db.prepare("SELECT * FROM connection_rerquests WHERE id=? AND receiverId=? AND status='pending'").get(req.params.id, req.user.sub);
   if (!c) return res.status(404).json({ message: 'Request not found.' });
   if (status === 'accepted') {
-    await db.prepare("UPDATE connections SET status='accepted' WHERE id=?").run(c.id);
+    await db.prepare("UPDATE connection_requests SET status='accepted' WHERE id=?").run(c.id);
+await db.prepare("INSERT INTO connections(senderId,receiverId,status) VALUES(?,?,'accepted')").run(c.senderid, c.receiverid);
     await notify(c.senderid ?? c.senderId, 'connection_accept', { connectionId: c.id, userId: +req.user.sub });
     const update = { id: c.id, status: 'accepted', userId: +req.user.sub };
     io.to(`user:${c.senderid ?? c.senderId}`).to(`user:${c.receiverid ?? c.receiverId}`).emit('connection_accepted', update);
