@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { getToken } from '../services/api.js';
-const URL = `${window.location.protocol}//${window.location.hostname || 'localhost'}:8080`;
+const URL = import.meta.env.VITE_WS_URL || `http://localhost:8080`;
 export function useChatSocket(handlers={}) {
   const socketRef=useRef(null), handlersRef=useRef(handlers); const [status,setStatus]=useState('connecting');
   useEffect(()=>{handlersRef.current=handlers},[handlers]);
