@@ -71,10 +71,14 @@ export function startLanServer(port, origin) {
     });
   });
 
-  httpServer.listen(port);
-  console.log(`LAN server started on port ${port}`);
-
-  return {httpServer, io};
+ httpServer.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${port} already in use. Try stopping the LAN server first.`);
+  } else {
+    console.error('LAN server error:', err);
+  }
+});
+httpServer.listen(port);
 }
 
 export function stopLanServer() {
